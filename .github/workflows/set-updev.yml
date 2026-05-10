@@ -9,22 +9,21 @@ jobs:
     steps:
       - name: Configure passwordless sudo
         run: |
-          echo "${{ secrets.DEV_SSH_KEY }}" | base64 -d > /tmp/deploy_key
-          chmod 600 /tmp/deploy_key
-          ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no \
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEV_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }} \
             "sudo tee /etc/sudoers.d/${{ secrets.DEV_USER }} <<< '${{ secrets.DEV_USER }} ALL=(ALL) NOPASSWD:ALL'"
-          rm /tmp/deploy_key
 
       - name: Install Docker
         run: |
-          echo "${{ secrets.DEV_SSH_KEY }}" | base64 -d > /tmp/deploy_key
-          chmod 600 /tmp/deploy_key
-          ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no \
+          echo "${{ secrets.DEV_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }} << 'EOF'
           curl -fsSL https://get.docker.com -o get-docker.sh
           sudo sh get-docker.sh
           sudo usermod -aG docker $(whoami)
           sudo mkdir -p /opt/app && sudo chown $(whoami):$(whoami) /opt/app
           EOF
-          rm /tmp/deploy_key
