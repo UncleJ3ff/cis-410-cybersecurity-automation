@@ -1,0 +1,43 @@
+name: "Deploy — Dev"
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: "Build and Deploy to Dev VM"
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Copy app files to Dev VM
+        run: |
+          echo "${{ secrets.DEV_SSH_KEY }}" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          scp -i /tmp/deploy_key -o StrictHostKeyChecking=no -r \
+            app/ Dockerfile .dockerignore docker-compose.yml \
+            ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }}:/opt/app/
+          rm /tmp/deploy_key
+
+      - name: Deploy Flask container
+        run: |
+          echo "${{ secrets.DEV_SSH_KEY }}" > /tmp/deploy_key
+          chmod 600 /tmp/deploy_key
+          ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no \
+            ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }} << 'EOF'
+          set -e
+          cd /opt/app
+          export DEPLOY_TIME="$(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          export GITHUB_SHA="${{ github.sha }}"
+          export GITHUB_REF_NAME="${{ github.ref_name }}"
+          sudo docker compose down --remove-orphans
+          sudo DEPLOY_TIME="${DEPLOY_TIME}" GITHUB_SHA="${GITHUB_SHA}" GITHUB_REF_NAME="${GITHUB_REF_NAME}" \
+            docker compose up -d --build
+          EOF
+          rm /tmp/deploy_key
+
+      - name: Smoke test
+        run: |
+          sleep 4
+          curl -f "http://${{ secrets.DEV_HOST }}:5000/health" | python3 -m json.tool
