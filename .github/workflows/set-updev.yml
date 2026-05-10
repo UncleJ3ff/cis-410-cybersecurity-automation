@@ -9,7 +9,7 @@ jobs:
     steps:
       - name: Configure passwordless sudo
         run: |
-          echo "${{ secrets.DEV_SSH_KEY }}" > /tmp/deploy_key
+          echo "${{ secrets.DEV_SSH_KEY }}" | base64 -d > /tmp/deploy_key
           chmod 600 /tmp/deploy_key
           ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }} \
@@ -18,7 +18,7 @@ jobs:
 
       - name: Install Docker
         run: |
-          echo "${{ secrets.DEV_SSH_KEY }}" > /tmp/deploy_key
+          echo "${{ secrets.DEV_SSH_KEY }}" | base64 -d > /tmp/deploy_key
           chmod 600 /tmp/deploy_key
           ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }} << 'EOF'
