@@ -9,8 +9,14 @@ jobs:
     steps:
       - name: Install Docker
         run: |
+          # Create the key
           echo "${{ secrets.DEV_SSH_KEY }}" > /tmp/deploy_key
           chmod 600 /tmp/deploy_key
+          
+          # FORCE TRUST: This line solves the Code 255 error
+          ssh-keyscan -H ${{ secrets.DEV_HOST }} >> ~/.ssh/known_hosts
+          
+          # Run the installation
           ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no \
             ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }} << 'EOF'
           set -e
