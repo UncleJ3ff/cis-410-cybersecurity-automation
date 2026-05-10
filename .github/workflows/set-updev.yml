@@ -12,15 +12,15 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.DEV_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
             ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }} \
-            "sudo tee /etc/sudoers.d/${{ secrets.DEV_USER }} <<< '${{ secrets.DEV_USER }} ALL=(ALL) NOPASSWD:ALL'"
+            "echo 'SSH connection successful'"
 
       - name: Install Docker
         run: |
           echo "${{ secrets.DEV_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
             ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }} << 'EOF'
           curl -fsSL https://get.docker.com -o get-docker.sh
           sudo sh get-docker.sh
