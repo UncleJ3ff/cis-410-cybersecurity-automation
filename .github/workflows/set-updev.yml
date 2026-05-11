@@ -9,7 +9,8 @@ jobs:
     steps:
       - name: Install Docker
         run: |
-          ssh -o StrictHostKeyChecking=no student@ub-server << 'EOF'
+          sshpass -p '${{ secrets.DEV_PASSWORD }}' ssh -o StrictHostKeyChecking=no \
+            student@ub-server << 'EOF'
           curl -fsSL https://get.docker.com -o get-docker.sh
           sudo sh get-docker.sh
           sudo usermod -aG docker $(whoami)
