@@ -9,22 +9,31 @@ jobs:
     steps:
       - name: Install Docker
         run: |
+          # Using the IP 192.168.1.124 directly to avoid 'ub-server' errors
           sshpass -p '${{ secrets.DEV_PASSWORD }}' ssh -o StrictHostKeyChecking=no \
             student@192.168.1.124 << 'EOF'
+          
           set -e
-          # Clear locks again just in case
+          
+          echo "=== 1. Clearing Apt Locks ==="
           sudo rm -f /var/lib/dpkg/lock-frontend
           
-          # Install Docker using the official script
-          curl -fsSL https://get.docker.com -o get-docker.sh
-          sudo sh get-docker.sh
-          
-          # Setup permissions and directory
-          sudo usermod -aG docker student
+          echo "=== 2. Setting up Passwordless Sudo ==="
+          echo 'student ALL=(ALL) NOPASSWD:ALL' | sudo tee /etc/sudoers.d/student
+          sudo chmod 0440 /etc/sudoers.d/student
+
+          echo "=== 3. Installing Docker Engine ==="
+          if ! command -v docker &> /dev/null; then
+            curl -fsSL https://get.docker.com -o get-docker.sh
+            sudo sh get-docker.sh
+            sudo usermod -aG docker student
+            rm get-docker.sh
+          fi
+
+          echo "=== 4. Creating App Directory ==="
           sudo mkdir -p /opt/app
           sudo chown student:student /opt/app
           
-          echo "=== Verification ==="
+          echo "=== Success: Docker is ready ==="
           docker --version
-          ls -ld /opt/app
           EOF
