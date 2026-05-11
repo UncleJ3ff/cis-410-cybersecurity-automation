@@ -7,23 +7,11 @@ jobs:
     name: "Install Docker on Dev VM"
     runs-on: self-hosted
     steps:
-      - name: Configure passwordless sudo
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.DEV_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
-            ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }} \
-            "echo 'SSH connection successful'"
-
       - name: Install Docker
         run: |
-          echo "${{ secrets.DEV_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -o ConnectTimeout=10 \
+          ssh -o StrictHostKeyChecking=no \
             ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }} << 'EOF'
           curl -fsSL https://get.docker.com -o get-docker.sh
           sudo sh get-docker.sh
           sudo usermod -aG docker $(whoami)
-          sudo mkdir -p /opt/app && sudo chown $(whoami):$(whoami) /opt/app
           EOF
