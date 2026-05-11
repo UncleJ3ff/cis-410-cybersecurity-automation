@@ -13,19 +13,13 @@ jobs:
 
       - name: Copy app files to Dev VM
         run: |
-          echo "${{ secrets.DEV_SSH_KEY }}" > /tmp/deploy_key
-          chmod 600 /tmp/deploy_key
-          scp -i /tmp/deploy_key -o StrictHostKeyChecking=no -r \
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -r \
             app/ Dockerfile .dockerignore docker-compose.yml \
-            ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }}:/opt/app/
-          rm /tmp/deploy_key
+            student@192.168.1.124:/opt/app/
 
       - name: Deploy Flask container
         run: |
-          echo "${{ secrets.DEV_SSH_KEY }}" > /tmp/deploy_key
-          chmod 600 /tmp/deploy_key
-          ssh -i /tmp/deploy_key -o StrictHostKeyChecking=no \
-            ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }} << 'EOF'
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no student@192.168.1.124 << 'EOF'
           set -e
           cd /opt/app
           export DEPLOY_TIME="$(date -u +'%Y-%m-%d %H:%M:%S UTC')"
@@ -35,4 +29,3 @@ jobs:
           DEPLOY_TIME="${DEPLOY_TIME}" GITHUB_SHA="${GITHUB_SHA}" GITHUB_REF_NAME="${GITHUB_REF_NAME}" \
             docker compose up -d --build
           EOF
-          rm /tmp/deploy_key
