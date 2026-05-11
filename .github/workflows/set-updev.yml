@@ -9,9 +9,9 @@ jobs:
     steps:
       - name: Install Docker
         run: |
-          ssh -o StrictHostKeyChecking=no \
-            ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no student@ub-server << 'EOF'
           curl -fsSL https://get.docker.com -o get-docker.sh
           sudo sh get-docker.sh
           sudo usermod -aG docker $(whoami)
+          sudo mkdir -p /opt/app && sudo chown $(whoami):$(whoami) /opt/app
           EOF
