@@ -1,0 +1,31 @@
+name: "Deploy – Prod"
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    name: "Build and Deploy to Prod VM"
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Copy app files to Prod VM
+        run: |
+          scp -i ~/.ssh/prod_key -o StrictHostKeyChecking=no -r \
+            app/ Dockerfile .dockerignore docker-compose.yml \
+            student@${{ secrets.PROD_HOST }}:/opt/app/
+
+      - name: Deploy Flask container
+        run: |
+          ssh -i ~/.ssh/prod_key -o StrictHostKeyChecking=no student@${{ secrets.PROD_HOST }} << 'EOF'
+          set -e
+          cd /opt/app
+          export DEPLOY_TIME="$(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          export GITHUB_SHA="${{ github.sha }}"
+          export GITHUB_REF_NAME="${{ github.ref_name }}"
+          docker compose down --remove-orphans
+          DEPLOY_TIME="${DEPLOY_TIME}" GITHUB_SHA="${GITHUB_SHA}" GITHUB_REF_NAME="${GITHUB_REF_NAME}" \
+            docker compose up -d --build
+          EOF
