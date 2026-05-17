@@ -1,45 +1,94 @@
+from flask import Flask, request, jsonify
+import sqlite3
 import os
 import socket
-import datetime
-from flask import Flask, render_template, jsonify
 
 app = Flask(__name__)
 
-# ── App metadata injected at build time (or defaults for local dev) ──
-APP_VERSION   = os.environ.get("APP_VERSION",   "1.0.0")
-ENVIRONMENT   = os.environ.get("ENVIRONMENT",   "dev")
-DEPLOY_TIME   = os.environ.get("DEPLOY_TIME",   "unknown")
-COMMIT_SHA    = os.environ.get("COMMIT_SHA",    "local")
-BRANCH        = os.environ.get("BRANCH",        "main")
-WORKFLOW      = os.environ.get("WORKFLOW",      "deploy-dev.yml")
+def get_db():
+    db = sqlite3.connect(':memory:')
+    db.execute('''CREATE TABLE users 
+                  (id INTEGER PRIMARY KEY, username TEXT, email TEXT)''')
+    db.executemany('INSERT INTO users VALUES (?,?,?)', [
+        (1, 'alice', 'alice@example.com'),
+        (2, 'bob', 'bob@example.com'),
+        (3, 'charlie', 'charlie@example.com'),
+        (4, 'diana', 'diana@example.com'),
+        (5, 'eve', 'eve@example.com'),
+        (6, 'frank', 'frank@example.com'),
+    ])
+    db.commit()
+    return db
 
-@app.route("/")
+@app.route('/')
 def index():
-    """Main deployment status dashboard."""
-    context = {
-        "version":    APP_VERSION,
-        "env":        ENVIRONMENT,
-        "hostname":   socket.gethostname(),
-        "deploy_time": DEPLOY_TIME,
-        "commit_sha": COMMIT_SHA[:7] if len(COMMIT_SHA) > 7 else COMMIT_SHA,
-        "branch":     BRANCH,
-        "workflow":   WORKFLOW,
-        "port":       "5000",
-    }
-    return render_template("index.html", **context)
+    env = os.environ.get('ENVIRONMENT', 'dev')
+    version = os.environ.get('APP_VERSION', '1.0.0')
+    deploy_time = os.environ.get('DEPLOY_TIME', 'unknown')
+    commit_sha = os.environ.get('COMMIT_SHA', 'local')[:7]
+    branch = os.environ.get('BRANCH', 'main')
+    workflow = os.environ.get('WORKFLOW', 'unknown')
+    hostname = socket.gethostname()
+    return f'''<!DOCTYPE html>
+<html><head><title>CIS 410 - {env.upper()} Deployment Dashboard</title>
+<style>
+body{{font-family:monospace;background:#1a1a2e;color:#eee;padding:20px}}
+h1{{color:#00d4ff}}h2{{color:#00ff88}}
+.card{{background:#16213e;padding:15px;margin:10px 0;border-radius:5px;border-left:4px solid #00d4ff}}
+.ok{{color:#00ff88}}.env{{color:#ffd700;font-size:1.5em;font-weight:bold}}
+</style></head>
+<body>
+<h1>CIS 410 - DevSecOps Platform</h1>
+<p>Deployment Status Dashboard - JeffreyHysons-Dev</p>
+<p class="env">{env}</p>
+<div class="card"><h2>Overview</h2>
+<p>Status: <span class="ok">Running</span></p>
+<p>Container healthy</p>
+<p>Environment: {env}</p>
+<p>Port 5000</p>
+<p>App version: {version}</p>
+<p>{branch}</p>
+<p>Pipeline: <span class="ok">Passing</span></p>
+<p>{workflow}</p></div>
+<div class="card"><h2>Deployment info</h2>
+<p>Container hostname: {hostname}</p>
+<p>Host VM: {env}-vm</p>
+<p>Deployed at: {deploy_time}</p>
+<p>Commit SHA: {commit_sha}</p>
+<p>Branch: {branch}</p>
+<p>Triggered by: {workflow}</p></div>
+<div class="card"><h2>Security checks</h2>
+<p>Container hardening: All rules passing</p>
+<p>Running user: appuser (non-root)</p>
+<p>Base image: python:3.11-slim</p></div>
+<p><a href="/search" style="color:#00d4ff">User Search</a></p>
+</body></html>'''
 
+@app.route('/search')
+def search():
+    q = request.args.get('q', '')
+    injection_detected = any(x in q.lower() for x in ["'", '"', ' or ', ' and ', '--', ';'])
+    db = get_db()
+    try:
+        results = db.execute(f"SELECT * FROM users WHERE username LIKE '%{q}%' OR email LIKE '%{q}%'").fetchall()
+    except Exception as e:
+        results = []
+    alert = '<div style="background:red;color:white;padding:10px;margin:10px 0"><strong>SQL INJECTION DETECTED!</strong> Unsanitized input executed against database.</div>' if injection_detected else ''
+    rows = ''.join(f'<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td></tr>' for r in results)
+    return f'''<!DOCTYPE html><html><head><title>User Search</title>
+<style>body{{font-family:monospace;background:#1a1a2e;color:#eee;padding:20px}}
+table{{border-collapse:collapse;width:100%}}td,th{{border:1px solid #444;padding:8px}}
+input{{padding:5px;width:300px}}button{{padding:5px 10px}}</style></head>
+<body><h1 style="color:#00d4ff">User Search</h1>
+{alert}
+<form><input name="q" value="{q}" placeholder="Search users..."><button type="submit">Search</button></form>
+<table><tr><th>ID</th><th>Username</th><th>Email</th></tr>{rows}</table>
+<p><a href="/" style="color:#00d4ff">Back</a></p>
+</body></html>'''
 
-@app.route("/health")
+@app.route('/health')
 def health():
-    """Health check endpoint — used by the pipeline smoke test."""
-    return jsonify({
-        "status":  "ok",
-        "version": APP_VERSION,
-        "env":     ENVIRONMENT,
-        "host":    socket.gethostname(),
-        "time":    datetime.datetime.utcnow().isoformat() + "Z",
-    })
+    return jsonify({'status': 'ok', 'environment': os.environ.get('ENVIRONMENT', 'dev')})
 
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=False)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=False)
