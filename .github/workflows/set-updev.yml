@@ -9,7 +9,7 @@ jobs:
     steps:
       - name: Install Docker
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no student@192.168.1.124 << 'EOF'
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no student@192.168.1.132 << 'EOF'
           set -e
 
           echo "=== 1. Setting up Passwordless Sudo ==="
