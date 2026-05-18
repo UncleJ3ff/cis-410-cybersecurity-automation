@@ -10,17 +10,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Install Node and Snyk
+      - name: Install Snyk CLI
         run: |
-          curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-          sudo apt-get install -y nodejs
-          sudo npm install -g snyk
-
+          curl -sLo /tmp/snyk https://static.snyk.io/cli/latest/snyk-linux
+          chmod +x /tmp/snyk
+          sudo mv /tmp/snyk /usr/local/bin/snyk
       - name: Run Snyk Code Scan
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: snyk code test --severity-threshold=high || true
+        run: snyk code test --severity-threshold=high
 
   snyk-open-source:
     name: "Snyk Open Source Scan"
@@ -28,17 +26,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Install Node and Snyk
+      - name: Install Snyk CLI
         run: |
-          curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-          sudo apt-get install -y nodejs
-          sudo npm install -g snyk
-
+          curl -sLo /tmp/snyk https://static.snyk.io/cli/latest/snyk-linux
+          chmod +x /tmp/snyk
+          sudo mv /tmp/snyk /usr/local/bin/snyk
       - name: Run Snyk Open Source Scan
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: snyk test --severity-threshold=high || true
+        run: snyk test --severity-threshold=high
 
   snyk-container:
     name: "Snyk Container Scan"
@@ -46,14 +42,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Install Node and Snyk
+      - name: Install Snyk CLI
         run: |
-          curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-          sudo apt-get install -y nodejs
-          sudo npm install -g snyk
-
+          curl -sLo /tmp/snyk https://static.snyk.io/cli/latest/snyk-linux
+          chmod +x /tmp/snyk
+          sudo mv /tmp/snyk /usr/local/bin/snyk
       - name: Run Snyk Container Scan
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        run: snyk container test python:3.11-slim --severity-threshold=high || true
+        run: snyk container test python:3.11-slim --severity-threshold=high
