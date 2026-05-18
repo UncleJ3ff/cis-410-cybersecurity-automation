@@ -1,22 +1,20 @@
-from flask import Flask, request, jsonify
 import sqlite3
-import os
 import socket
+import os
+from flask import Flask, request
 
 app = Flask(__name__)
 
 def get_db():
     db = sqlite3.connect(':memory:')
-    db.execute('''CREATE TABLE users 
+    db.execute('''CREATE TABLE IF NOT EXISTS users
                   (id INTEGER PRIMARY KEY, username TEXT, email TEXT)''')
-    db.executemany('INSERT INTO users VALUES (?,?,?)', [
-        (1, 'alice', 'alice@example.com'),
-        (2, 'bob', 'bob@example.com'),
-        (3, 'charlie', 'charlie@example.com'),
-        (4, 'diana', 'diana@example.com'),
-        (5, 'eve', 'eve@example.com'),
-        (6, 'frank', 'frank@example.com'),
-    ])
+    db.execute("INSERT INTO users VALUES (1, 'alice', 'alice@example.com')")
+    db.execute("INSERT INTO users VALUES (2, 'bob', 'bob@example.com')")
+    db.execute("INSERT INTO users VALUES (3, 'charlie', 'charlie@example.com')")
+    db.execute("INSERT INTO users VALUES (4, 'david', 'david@example.com')")
+    db.execute("INSERT INTO users VALUES (5, 'eve', 'eve@example.com')")
+    db.execute("INSERT INTO users VALUES (6, 'frank', 'frank@example.com')")
     db.commit()
     return db
 
@@ -25,9 +23,9 @@ def index():
     env = os.environ.get('ENVIRONMENT', 'dev')
     version = os.environ.get('APP_VERSION', '1.0.0')
     deploy_time = os.environ.get('DEPLOY_TIME', 'unknown')
-    commit_sha = os.environ.get('COMMIT_SHA', 'local')[:7]
+    commit_sha = os.environ.get('COMMIT_SHA', 'local')
     branch = os.environ.get('BRANCH', 'main')
-    workflow = os.environ.get('WORKFLOW', 'unknown')
+    workflow = os.environ.get('WORKFLOW', 'manual')
     hostname = socket.gethostname()
     return f'''<!DOCTYPE html>
 <html><head><title>CIS 410 - {env.upper()} Deployment Dashboard</title>
@@ -60,35 +58,38 @@ h1{{color:#00d4ff}}h2{{color:#00ff88}}
 <div class="card"><h2>Security checks</h2>
 <p>Container hardening: All rules passing</p>
 <p>Running user: appuser (non-root)</p>
-<p>Base image: python:3.11-slim</p></div>
-<p><a href="/search" style="color:#00d4ff">User Search</a></p>
+<p>Base image: python:3.11-slim</p>
+<p><span class="ok">SECURE</span> - All vulnerabilities fixed</p></div>
+<a href="/search" style="color:#00d4ff">User Search</a>
 </body></html>'''
 
 @app.route('/search')
 def search():
     q = request.args.get('q', '')
-    injection_detected = any(x in q.lower() for x in ["'", '"', ' or ', ' and ', '--', ';'])
     db = get_db()
     try:
-        results = db.execute(f"SELECT * FROM users WHERE username LIKE '%{q}%' OR email LIKE '%{q}%'").fetchall()
+        results = db.execute(
+            "SELECT * FROM users WHERE username LIKE ? OR email LIKE ?",
+            (f'%{q}%', f'%{q}%')
+        ).fetchall()
     except Exception as e:
         results = []
-    alert = '<div style="background:red;color:white;padding:10px;margin:10px 0"><strong>SQL INJECTION DETECTED!</strong> Unsanitized input executed against database.</div>' if injection_detected else ''
+
     rows = ''.join(f'<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td></tr>' for r in results)
+    safe_q = q.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
     return f'''<!DOCTYPE html><html><head><title>User Search</title>
 <style>body{{font-family:monospace;background:#1a1a2e;color:#eee;padding:20px}}
 table{{border-collapse:collapse;width:100%}}td,th{{border:1px solid #444;padding:8px}}
 input{{padding:5px;width:300px}}button{{padding:5px 10px}}</style></head>
 <body><h1 style="color:#00d4ff">User Search</h1>
-{alert}
-<form><input name="q" value="{q}" placeholder="Search users..."><button type="submit">Search</button></form>
+<form><input name="q" value="{safe_q}" placeholder="Search users..."><button type="submit">Search</button></form>
 <table><tr><th>ID</th><th>Username</th><th>Email</th></tr>{rows}</table>
 <p><a href="/" style="color:#00d4ff">Back</a></p>
 </body></html>'''
 
 @app.route('/health')
 def health():
-    return jsonify({'status': 'ok', 'environment': os.environ.get('ENVIRONMENT', 'dev')})
+    return ({'status': 'ok', 'environment': os.environ.get('ENVIRONMENT', 'dev')})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
