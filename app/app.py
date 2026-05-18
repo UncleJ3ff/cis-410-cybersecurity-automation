@@ -2,6 +2,7 @@ import sqlite3
 import socket
 import os
 from flask import Flask, request
+from markupsafe import escape
 
 app = Flask(__name__)
 
@@ -75,8 +76,8 @@ def search():
     except Exception as e:
         results = []
 
-    rows = ''.join(f'<tr><td>{r[0]}</td><td>{r[1]}</td><td>{r[2]}</td></tr>' for r in results)
-    safe_q = q.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
+    rows = ''.join(f'<tr><td>{r[0]}</td><td>{escape(r[1])}</td><td>{escape(r[2])}</td></tr>' for r in results)
+    safe_q = escape(q)
     return f'''<!DOCTYPE html><html><head><title>User Search</title>
 <style>body{{font-family:monospace;background:#1a1a2e;color:#eee;padding:20px}}
 table{{border-collapse:collapse;width:100%}}td,th{{border:1px solid #444;padding:8px}}
