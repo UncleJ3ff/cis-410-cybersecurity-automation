@@ -11,8 +11,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Snyk
-        run: npm install -g snyk
+      - name: Install Node and Snyk
+        run: |
+          curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+          sudo apt-get install -y nodejs
+          sudo npm install -g snyk
 
       - name: Run Snyk Code Scan
         env:
@@ -26,8 +29,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Snyk
-        run: npm install -g snyk
+      - name: Install Node and Snyk
+        run: |
+          curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+          sudo apt-get install -y nodejs
+          sudo npm install -g snyk
 
       - name: Run Snyk Open Source Scan
         env:
@@ -41,8 +47,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Snyk
-        run: npm install -g snyk
+      - name: Install Node and Snyk
+        run: |
+          curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+          sudo apt-get install -y nodejs
+          sudo npm install -g snyk
 
       - name: Run Snyk Container Scan
         env:
