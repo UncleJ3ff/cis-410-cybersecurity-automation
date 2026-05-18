@@ -1,8 +1,7 @@
 import sqlite3
 import socket
 import os
-from flask import Flask, request
-from markupsafe import escape
+from flask import Flask, request, render_template_string
 
 app = Flask(__name__)
 
@@ -76,17 +75,19 @@ def search():
     except Exception as e:
         results = []
 
-    rows = ''.join(f'<tr><td>{r[0]}</td><td>{escape(r[1])}</td><td>{escape(r[2])}</td></tr>' for r in results)
-    safe_q = escape(q)
-    return f'''<!DOCTYPE html><html><head><title>User Search</title>
-<style>body{{font-family:monospace;background:#1a1a2e;color:#eee;padding:20px}}
-table{{border-collapse:collapse;width:100%}}td,th{{border:1px solid #444;padding:8px}}
-input{{padding:5px;width:300px}}button{{padding:5px 10px}}</style></head>
+    template = """<!DOCTYPE html><html><head><title>User Search</title>
+<style>body{font-family:monospace;background:#1a1a2e;color:#eee;padding:20px}
+table{border-collapse:collapse;width:100%}td,th{border:1px solid #444;padding:8px}
+input{padding:5px;width:300px}button{padding:5px 10px}</style></head>
 <body><h1 style="color:#00d4ff">User Search</h1>
-<form><input name="q" value="{safe_q}" placeholder="Search users..."><button type="submit">Search</button></form>
-<table><tr><th>ID</th><th>Username</th><th>Email</th></tr>{rows}</table>
+<form><input name="q" value="{{ q }}" placeholder="Search users..."><button type="submit">Search</button></form>
+<table><tr><th>ID</th><th>Username</th><th>Email</th></tr>
+{% for r in results %}<tr><td>{{ r[0] }}</td><td>{{ r[1] }}</td><td>{{ r[2] }}</td></tr>{% endfor %}
+</table>
 <p><a href="/" style="color:#00d4ff">Back</a></p>
-</body></html>'''
+</body></html>"""
+
+    return render_template_string(template, q=q, results=results)
 
 @app.route('/health')
 def health():
