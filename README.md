@@ -25,3 +25,4 @@ Pipeline status: [![Hello Pipeline](https://github.com/UncleJ3ff/cis-410-cyberse
 ## Week 5 - Snyk Security Scan
 ## Week 5 - Triggering Snyk Scan
 ## Testing Snyk scan ##
+## Week 5 - Snyk Binary Test ##
