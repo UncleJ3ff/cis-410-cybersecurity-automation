@@ -1,4 +1,5 @@
-name: "Deploy – Dev"
+name: "Deploy — Dev"
+
 on:
   push:
     branches: [main]
@@ -15,11 +16,11 @@ jobs:
         run: |
           scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no -r \
             app/ Dockerfile .dockerignore docker-compose.yml \
-            student@192.168.1.132:/opt/app/
+            ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }}:/opt/app/
 
       - name: Deploy Flask container
         run: |
-          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no student@192.168.1.132 << 'EOF'
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }} << 'EOF'
           set -e
           cd /opt/app
           export DEPLOY_TIME="$(date -u +'%Y-%m-%d %H:%M:%S UTC')"
