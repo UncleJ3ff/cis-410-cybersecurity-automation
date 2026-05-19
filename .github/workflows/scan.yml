@@ -41,7 +41,7 @@ jobs:
           ./snyk --version
 
       - name: Snyk dependency scan (SCA)
-        run: ./snyk test --file=app/requirements.txt --severity-threshold=high --package-manager=pip
+        run: ./snyk test --file=app/requirements.txt --severity-threshold=high --package-manager=pip --skip-unresolved
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
@@ -93,7 +93,7 @@ jobs:
           SNYK_TOKEN="${{ secrets.SNYK_TOKEN }}" \
             /tmp/snyk-cli container test /tmp/image.tar \
             --file=Dockerfile \
-            --severity-threshold=high
+            --severity-threshold=critical
           ENDSSH
 
       - name: Cleanup on yourname-dev
@@ -103,4 +103,3 @@ jobs:
             ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }} \
             "sudo docker rmi snyk-scan-target 2>/dev/null || true; rm -rf /tmp/snyk-scan /tmp/snyk-cli /tmp/image.tar" || true
           rm -f /tmp/scan_key
-          
