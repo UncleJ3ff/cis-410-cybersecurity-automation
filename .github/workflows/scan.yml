@@ -43,7 +43,7 @@ jobs:
 
       - name: Set up virtual environment and install dependencies
         run: |
-          echo "${{ secrets.SUDO_PASS }}" | /usr/bin/sudo -S apt-get install -y python3-pip python3-venv
+                    echo "${{ secrets.SUDO_PASS }}" | /usr/bin/sudo -S apt-get install -y python3-pip python3-venv || true
           python3 -m venv .venv
           .venv/bin/pip install -r app/requirements.txt
 
