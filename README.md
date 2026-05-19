@@ -21,3 +21,14 @@ I just watched the new Avatar, Legend of Aang Movie lol
 Runner VM: JeffreyHysons-Runner
 Pipeline status: [![Hello Pipeline](https://github.com/UncleJ3ff/cis-410-cybersecurity-automation/actions/workflows/hello-pipeline.yml/badge.svg)](https://github.com/UncleJ3ff/cis-410-cybersecurity-automation/actions/workflows/hello-pipeline.yml)
 
+## Week 5 - Vulnerable App Branch
+## Week 5 - Snyk Security Scan
+## Week 5 - Triggering Snyk Scan
+## Testing Snyk scan ##
+## Week 5 - Snyk Binary Test ##
+## Week 5 - Fixed Vulnerabilities ##
+## Week 5 - All Vulnerabilities fixed ##
+## Week 5 - Final scan with lab files ##
+## Week 5 - Scan Fix ##
+## Trigger scan with critical threshold ##
+## Test ##
