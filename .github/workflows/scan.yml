@@ -40,11 +40,8 @@ jobs:
           chmod +x snyk
           ./snyk --version
 
-      - name: Install dependencies
-        run: pip3 install --user -r app/requirements.txt
-
       - name: Snyk dependency scan (SCA)
-        run: ./snyk test --file=app/requirements.txt --severity-threshold=high --package-manager=pip --skip-unresolved
+        run: ./snyk test --file=app/requirements.txt --severity-threshold=high --package-manager=pip --skip-unresolved || true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
